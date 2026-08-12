@@ -23,7 +23,7 @@ jobs:
           $sqliteRoot = Join-Path $env:RUNNER_TEMP sqlite-runtime
           New-Item -ItemType Directory -Force $sqliteRoot | Out-Null
           $archive = Join-Path $sqliteRoot sqlite-tools.zip
-          Invoke-WebRequest -Uri https://www.sqlite.org/2023/sqlite-tools-win-x64-3430200.zip -OutFile $archive
+          Invoke-WebRequest -Uri https://www.sqlite.org/2026/sqlite-tools-win-x64-3510200.zip -OutFile $archive
           Expand-Archive -LiteralPath $archive -DestinationPath $sqliteRoot -Force
           $sqlite = Get-ChildItem $sqliteRoot -Recurse -Filter sqlite3.exe | Select-Object -First 1 -ExpandProperty FullName
           if (-not $sqlite) { throw 'sqlite3.exe not found' }
