@@ -1,0 +1,8 @@
+1. 用SQLite查询support_sla.db的schema、integrity_check、foreign_key_check、tickets和ticket_events，确认源库可读。
+2. 通过readfile读取business_calendar.json，用JSON1展开workdays、holidays、sla_minutes和escalation_team_by_priority。
+3. 给pause_start与pause_end分别调用ROW_NUMBER，按ticket_id和序号连接，并用CHECK守卫拒绝未闭合或倒置区间。
+4. 用WITH RECURSIVE生成整分钟轴，按工作日、work_start、work_end和holidays筛出有效工作分钟。
+5. 根据status选择resolved_at或as_of_local，将暂停区间限制在opened_at到测量终点内，得到paused与business_elapsed分钟。
+6. 重建sla_clock，连接priority阈值，计算breach_minutes与sla_state。
+7. 筛选breached工单，按breach_minutes降序与ticket_id升序生成queue_rank，并关联升级团队。
+8. 用.once覆盖写出sla_clock.csv、pause_interval_audit.csv和breach_queue.csv，保留完成SQL与修复库供下游使用。

@@ -1,0 +1,85 @@
+总分100分
+
+1. 五项客服SLA交付
+分值：12分
+优先级：Gate项
+所属层级：L7产物结构或Schema或专业对象层
+标准答案：output包含support_sla_repaired.db、sql/rebuild_sla.sql、reports/sla_clock.csv、reports/pause_interval_audit.csv和reports/breach_queue.csv，每项可由对应下游角色直接使用。
+关键字段：五个固定相对路径、数据库对象、三份CSV表头
+容差：固定路径逐字比较；CSV允许LF或CRLF行尾；SQLite页布局可变。
+失败边界：任一核心交付缺失、路径错误、数据库不可打开或CSV不可解析。
+可观察证据：output文件树、修复库schema、完成SQL与三份CSV。
+客观硬性标准：五个交付路径全部存在且可解析，数据库integrity_check为ok。
+阈值：核心交付缺失数为0，解析错误数为0。
+
+2. 源库与日历实际消费
+分值：12分
+优先级：Gate项
+所属层级：L3输入数据导入与完整性层
+标准答案：完成SQL读取support_sla.db与business_calendar.json；tickets、ticket_events和日历中的工作时段、节假日、截止时间、阈值、路由全部参与派生。
+关键字段：ticket_id、event_id、timezone、workdays、work_start、work_end、holidays、as_of_local、sla_minutes、escalation_team_by_priority
+容差：输入路径保持不变；JSON键序与缩进可变；主键按原值关联。
+失败边界：跳过任一业务输入，在SQL中复制日历整套取值，或修复库源表与输入库存在差异。
+可观察证据：完成SQL的ATTACH、readfile与json_each操作，源表双向集合比较。
+客观硬性标准：两张源表逐行一致，日历全部合同字段被SQLite读取，孤儿业务输入数为0。
+阈值：源表差异行数为0，未消费日历字段数为0。
+
+3. 暂停区间配对与审计
+分值：14分
+优先级：高权重项
+所属层级：L8运行验证或可执行行为层
+标准答案：pause_start与pause_end分别按ticket_id、event_time、event_id编号后配对；pause_interval_audit的固定字段与数值见关键标准答案.xlsx。
+关键字段：ticket_id、pause_start、pause_end、start_reason、end_reason、business_pause_minutes、interval_state
+容差：按ticket_id与pause_start复合主键关联；时间与分钟值容差为0。
+失败边界：按工单主键写死配对，开始与结束错配，接受缺失或倒置区间，或暂停分钟包含日历外时间。
+可观察证据：ROW_NUMBER与区间守卫、pause_interval_audit表及CSV。
+客观硬性标准：全部暂停事件恰好配对一次，固定复合主键、原因和工作暂停分钟逐项匹配。
+阈值：未闭合区间数为0，字段差异数为0。
+
+4. 工作日历与测量窗口
+分值：16分
+优先级：高权重项
+所属层级：L8运行验证或可执行行为层
+标准答案：分钟轴使用Asia/Shanghai本地整分钟与左闭右开区间，只计JSON规定的工作日和工作时段并排除节假日；resolved取resolved_at，其他状态取as_of_local。
+关键字段：minute_start、opened_at、resolved_at、status、measured_until、workdays、holidays、work_start、work_end
+容差：所有时间精确到整分钟，边界和分钟值容差为0。
+失败边界：统计自然分钟，计入周末、节假日或work_end，未结工单使用本机当前时间，或测量终点与状态不符。
+可观察证据：递归分钟轴、日历筛选和sla_clock的measured_until。
+客观硬性标准：固定工单的测量终点与工作分钟见关键标准答案.xlsx，全部可从源表与日历复算。
+阈值：日历外分钟数为0，测量终点错误数为0。
+
+5. SLA时钟结算
+分值：18分
+优先级：高权重项
+所属层级：L6领域计算与专业规则层
+标准答案：sla_clock按ticket_id记录priority、status、business_elapsed_minutes、paused_business_minutes、sla_threshold_minutes、breach_minutes和sla_state，固定值见关键标准答案.xlsx。
+关键字段：ticket_id、priority、business_elapsed_minutes、paused_business_minutes、sla_threshold_minutes、breach_minutes、sla_state
+容差：按ticket_id关联；分钟和枚举值容差为0。
+失败边界：暂停重复扣减，阈值未取自JSON，breach_minutes为负，状态与超时分钟冲突，或缺少任一输入工单。
+可观察证据：_ticket_metrics、sla_clock表、sla_clock.csv与业务日历阈值。
+客观硬性标准：输入工单主键集合与sla_clock一致，全部分钟、阈值和状态逐项匹配。
+阈值：缺失工单数为0，数值或状态差异数为0。
+
+6. 超时升级队列
+分值：14分
+优先级：高权重项
+所属层级：L6领域计算与专业规则层
+标准答案：breach_queue只包含breached工单，按breach_minutes降序、ticket_id升序生成queue_rank；固定成员与字段见关键标准答案.xlsx。
+关键字段：queue_rank、ticket_id、priority、breach_minutes、escalation_team、enqueue_reason
+容差：queue_rank与顺序不允许偏差；enqueue_reason需包含对应priority和超时分钟，等价英文空白可归一。
+失败边界：未超时工单入队、超时工单遗漏、排名错误、团队未取自JSON或原因与字段冲突。
+可观察证据：breach_queue表及CSV、sla_clock和escalation_team_by_priority。
+客观硬性标准：队列主键、排名、工单、分钟和团队逐项匹配，原因能回指同一行字段。
+阈值：成员差异数为0，排名或路由错误数为0。
+
+7. 数据库、SQL与CSV闭合
+分值：14分
+优先级：普通项
+所属层级：L9跨产物一致性与可追溯层
+标准答案：修复库包含两张未变源表及sla_clock、pause_interval_audit、breach_queue；三份CSV分别来自对应派生表的固定列和业务排序，完成SQL能生成全部结果。
+关键字段：sqlite_schema、派生表主键、CSV表头、ticket_id、queue_rank、pause_start
+容差：SQLite页序、索引命名、SQL排版和CSV合法引号可变；解析后字段与顺序一致。
+失败边界：CSV与数据库表不同，SQL未生成派生表，源表被修改，主键重复，或同一业务对象跨产物字段冲突。
+可观察证据：完成SQL、修复库schema、三张派生表与三份CSV。
+客观硬性标准：数据库查询与CSV逐表全量相等，派生主键唯一，源表双向集合差为空。
+阈值：跨产物差异行数为0，重复主键数为0，源表差异行数为0。

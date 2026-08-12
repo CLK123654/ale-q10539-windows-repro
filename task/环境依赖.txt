@@ -1,0 +1,9 @@
+操作系统： Windows11、macOS或主流64位Linux。
+
+主软件： SQLite3.43或更高兼容版本，需支持JSON1、窗口函数、递归CTE、readfile、.open和.once。
+代码执行依赖： Node.js20或更高兼容版本、npm和PowerShell或系统终端，用于准备输出目录、复制源库并调用SQLite。
+CPU与内存： 适合当前客服工单库和分钟轴计算规模的通用多核CPU与常规内存。
+GPU： 系统默认图形配置。
+磁盘： 容纳输入库、业务日历、代码依赖、结算库、SQL和三份CSV。
+权限： 执行账号可读取input_data，并在同级output目录写入结果。
+超时： SQLite处理使用覆盖当前批次的有限超时。
