@@ -1,0 +1,52 @@
+name: Windows 2025 SQLite run
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.14.0
+      - name: Prepare SQLite
+        shell: pwsh
+        run: |
+          $sqliteRoot = Join-Path $env:RUNNER_TEMP sqlite-runtime
+          New-Item -ItemType Directory -Force $sqliteRoot | Out-Null
+          $archive = Join-Path $sqliteRoot sqlite-tools.zip
+          Invoke-WebRequest -Uri https://www.sqlite.org/2023/sqlite-tools-win-x64-3430200.zip -OutFile $archive
+          Expand-Archive -LiteralPath $archive -DestinationPath $sqliteRoot -Force
+          $sqlite = Get-ChildItem $sqliteRoot -Recurse -Filter sqlite3.exe | Select-Object -First 1 -ExpandProperty FullName
+          if (-not $sqlite) { throw 'sqlite3.exe not found' }
+          "SQLITE_BIN=$sqlite" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Audit four attachments
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force $env:RUNNER_TEMP\ale-evidence | Out-Null
+          node verification/windows_audit.mjs . | Tee-Object -FilePath $env:RUNNER_TEMP\ale-evidence\windows-audit.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Run complete SQLite checks
+        shell: pwsh
+        run: |
+          node verification/run_reproduction.mjs . | Tee-Object -FilePath $env:RUNNER_TEMP\ale-evidence\windows-reproduction.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Generate Windows reference
+        shell: pwsh
+        run: |
+          node verification/generate_reference.mjs .
+          Compress-Archive -Path .windows-reference\output -DestinationPath $env:RUNNER_TEMP\ale-evidence\reference.zip -Force
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-sqlite-evidence
+          path: ${{ runner.temp }}/ale-evidence/*
+          if-no-files-found: error
