@@ -14,7 +14,7 @@ const hashes={};for(const name of names)hashes[name]=crypto.createHash('sha256')
 assert(process.platform==='win32','Windows required');
 assert(process.env.SQLITE_BIN,'SQLite path is missing');
 const version=run(process.env.SQLITE_BIN,['--version']);assert(version.status===0,'SQLite is not executable');
-const featureFile=path.join(task,'README.md').replaceAll('\\','/').replaceAll("'","''");
+const featureFile=path.join(repo,'README.md').replaceAll('\\','/').replaceAll("'","''");
 const features=run(process.env.SQLITE_BIN,[':memory:',`select json_valid('{}'),row_number() over(),length(readfile('${featureFile}'));`]);
 const featureColumns=features.stdout.trim().split('|');
 assert(features.status===0&&featureColumns[0]==='1'&&featureColumns[1]==='1'&&Number(featureColumns[2])>0,`SQLite business features are unavailable:${features.stderr||features.stdout}`);
