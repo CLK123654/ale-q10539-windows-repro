@@ -3,7 +3,7 @@
 1. 五项客服SLA交付
 分值：12分
 优先级：Gate项
-所属层级：L7产物结构或Schema或专业对象层
+所属层级：L7产物结构 / Schema / 专业对象层
 标准答案：output包含support_sla_repaired.db、sql/rebuild_sla.sql、reports/sla_clock.csv、reports/pause_interval_audit.csv和reports/breach_queue.csv，每项可由对应下游角色直接使用。
 关键字段：五个固定相对路径、数据库对象、三份CSV表头
 容差：固定路径逐字比较；CSV允许LF或CRLF行尾；SQLite页布局可变。
@@ -27,7 +27,7 @@
 3. 暂停区间配对与审计
 分值：14分
 优先级：高权重项
-所属层级：L8运行验证或可执行行为层
+所属层级：L8运行验证 / 可执行行为层
 标准答案：pause_start与pause_end分别按ticket_id、event_time、event_id编号后配对；pause_interval_audit的固定字段与数值见关键标准答案.xlsx。
 关键字段：ticket_id、pause_start、pause_end、start_reason、end_reason、business_pause_minutes、interval_state
 容差：按ticket_id与pause_start复合主键关联；时间与分钟值容差为0。
@@ -39,7 +39,7 @@
 4. 工作日历与测量窗口
 分值：16分
 优先级：高权重项
-所属层级：L8运行验证或可执行行为层
+所属层级：L8运行验证 / 可执行行为层
 标准答案：分钟轴使用Asia/Shanghai本地整分钟与左闭右开区间，只计JSON规定的工作日和工作时段并排除节假日；resolved取resolved_at，其他状态取as_of_local。
 关键字段：minute_start、opened_at、resolved_at、status、measured_until、workdays、holidays、work_start、work_end
 容差：所有时间精确到整分钟，边界和分钟值容差为0。

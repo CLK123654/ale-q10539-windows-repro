@@ -1,9 +1,5 @@
 操作系统： Windows11、macOS或主流64位Linux。
 
-主软件： SQLite3.43或更高兼容版本，需支持JSON1、窗口函数、递归CTE、readfile、.open和.once。
-代码执行依赖： Node.js20或更高兼容版本、npm和PowerShell或系统终端，用于准备输出目录、复制源库并调用SQLite。
-CPU与内存： 适合当前客服工单库和分钟轴计算规模的通用多核CPU与常规内存。
-GPU： 系统默认图形配置。
-磁盘： 容纳输入库、业务日历、代码依赖、结算库、SQL和三份CSV。
-权限： 执行账号可读取input_data，并在同级output目录写入结果。
-超时： SQLite处理使用覆盖当前批次的有限超时。
+主软件使用SQLite3.43或更高兼容版本，须带有JSON1、窗口函数、递归CTE、readfile、.open和.once。Node.js20以上版本与npm准备output目录、复制只读源库并调用SQLite，可从PowerShell或系统终端启动。
+
+普通多核CPU与常规内存足以处理本批工单和整分钟轴，无需GPU。磁盘应能容纳输入库、业务日历、代码依赖、结算库、SQL和三份CSV。执行账号需要读取input_data并在同级output目录写入结果。SQLite处理使用覆盖当前批次的有限超时，避免异常查询一直占用客服结算窗口。
